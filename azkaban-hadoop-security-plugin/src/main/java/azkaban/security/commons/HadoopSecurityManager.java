@@ -39,6 +39,7 @@ public abstract class HadoopSecurityManager {
       "obtain.jobtracker.token";
   public static final String OBTAIN_NAMENODE_TOKEN = "obtain.namenode.token";
   public static final String OBTAIN_HCAT_TOKEN = "obtain.hcat.token";
+  public static final String OBTAIN_TIMELINE_TOKEN = "obtain.timeline.token";
 
   public static boolean shouldProxy(final Properties prop) {
     final String shouldProxy = prop.getProperty(ENABLE_PROXYING);
