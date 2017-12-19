@@ -534,6 +534,44 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
 
     final Credentials cred = new Credentials();
 
+    if (props.getBoolean(OBTAIN_TIMELINE_TOKEN, false)) {
+
+      try {
+
+        TimelineClient timelineClient = TimelineClient.createTimelineClient();
+        String rmPrincipal = conf.get(YarnConfiguration.RM_PRINCIPAL);
+        String renewer = null;
+        if (rmPrincipal != null && rmPrincipal.length() > 0) {
+          String rmHost = conf.getSocketAddr(
+                  YarnConfiguration.RM_ADDRESS,
+                  YarnConfiguration.DEFAULT_RM_ADDRESS,
+                  YarnConfiguration.DEFAULT_RM_PORT).getHostName();
+          renewer = SecurityUtil.getServerPrincipal(rmPrincipal, rmHost);
+        }
+
+        timelineClient.init(conf);
+        Token<TimelineDelegationTokenIdentifier> timelineToken = timelineClient.getDelegationToken(renewer);
+        if (timelineToken == null) {
+          logger.error("Failed to fetch TimeLine token");
+        }
+        logger.info("Created TimeLine token.");
+        logger.info("Token kind: " + timelineToken.getKind());
+        logger.info("Token service: " + timelineToken.getService());
+        cred.addToken(timelineToken.getService(), timelineToken);
+      } catch (IOException e) {
+        final String message =
+                "Failed to get timeline server token." + e.getMessage()
+                        + e.getCause();
+        logger.error(message, e);
+        throw new HadoopSecurityManagerException(message);
+      } catch (YarnException y){
+        final String message =
+                "Failed to get timeline server token." + y.getMessage()
+                        + y.getCause();
+        logger.error(message, y);
+        throw new HadoopSecurityManagerException(message);
+      }
+    }
     if (props.getBoolean(OBTAIN_HCAT_TOKEN, false)) {
       try {
 
